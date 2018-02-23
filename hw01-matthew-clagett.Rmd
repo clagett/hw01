@@ -7,35 +7,121 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Loading necessary packages
+## Data Import
+Loading necessary packages
 ```{r}
 library(readr)
+library(dplyr)
 ```
-# downloading file into the working directory
+
+Downloading file into the working directory
 ```{r}
 url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/autos/imports-85.data"
 download.file(url, destfile = "imports-85.data")
 ```
-Loading the data into R
+
 
 Creating the column names
 ```{r}
 names <- c("symbolizing", "normalized_losses", "make", "fuel_type", "aspiration", "num_of_doors", "body_style", "drive_wheels", "engine_location", "wheel_base", "length", "width", "height", "curb_weight", "engine_type", "num_of_cylinders", "engine_size", "fuel_system", "bore", "stroke", "compression_ratio", "horsepower", "peak_rpm", "city_mpg", "highway_mpg", "price")
 ```
+
 Classifications of columns
 ```{r}
 classes <- c("double","double","character","character","character","character","character","character","character", "double", "double", "double", "double", "integer", "character","character","integer","character", "double","double","double", "integer", "integer", "integer", "integer", "integer")
 classesreadr <- "ddcccccccddddiccicdddiiiii"
 length(classes)
 ```
+
 Importing the data with read.csv() using created column names and classes
 ```{r}
 data <- read.csv("imports-85.data", col.names=names, colClasses = classes, na.string = "?")
 str(data)
 ```
+
 Importing the data with read_csv() using created column names and classes
 ```{r}
 data2 <- read_csv("imports-85.data", col_names = names , col_types = classesreadr, na = "?")
 str(data2)
+```
+
+
+## Technical Questions about importing data
+###a. If you don't provide a vector of column names, what happens to the column names of the imported data when you simply invoke read.csv('imports-85.data')?
+The data frame's column names will default to the first row of the data.
+
+
+###b. If you don't provide a vector of column names, what happens to the column names of the imported data when you invoke read.csv('imports-85.data', header = FALSE)?
+The data frame's column names will default to dummy variables, labeled V1, V2, V3 ... etc
+
+
+###c. When using the reading table functions, if you don't specify how missing values are codified, what happens to the data type of those columns that contain '?', e.g. price or num_of_doors?
+Those that are supposed to be numerical are classified as factors
+
+
+###d. Say you import imports-85.data in two different ways. In the first option you import the data without specifying the data type of each column. In the second option you do specify the data types. You may wonder whether both options return a data frame of the same memory size. You can actually use the function object.size() that provides an estimate of the memory that is being used to store an R object. Why is the data frame imported in the second option bigger (in terms of bytes) than the data frame imported in the first option?
+
+
+###e. Say the object dat is the data frame produced when importing imports-85.data. What happens to the data values if you convert dat as an R matrix?
+All values are converted to class character
+
+# Practice base plotting
+1. Histogram of price with colored bars
+```{r}
+hist(data$price)
+```
+
+2. Boxplot of horsepower in horizontal orientation
+```{r}
+?boxplot
+boxplot(data$horsepower, horizontal=TRUE)
+```
+
+3. Barplot of the frequencies of body_style, arranged in decreasing order
+```{r}
+barplot(table(data$body_style)[order(table(data$body_style), decreasing=TRUE)])
+```
+Stars() plot of vehicles with turbo aspiration, using only variables wheel-base, length, width, height, and price
+```{r}
+stars(filter(data, aspiration == "turbo")[c("wheel_base", "length", "width", "height", "price")])
+```
+
+# Summaries
+###a. What is the mean price of fuel_type gas cars? And what is the mean price of fuel_type diesel cars? (removing missing values)
+```{r}
+summarise(data, mean_price_gas = mean(filter(data, fuel_type == "gas")$price, na.rm=TRUE),
+          mean_price_diesel = mean(filter(data, fuel_type == "diesel")$price, na.rm=TRUE))
+```
+
+###b. What is the make of the car with twelve num_of_cylinders?
+```{r}
+data
+select(filter(data, num_of_cylinders == "twelve"), make)
+```
+
+###c. What is the make that has the most diesel cars?
+```{r}
+names(which.max(table(data$make)))
+```
+
+###d What is the price of the car with the largest amount of horsepower?
+```{r}
+data[which.max(data$horsepower),]$price
+slice(arrange(data, desc(horsepower)),1)$price
+```
+
+###e. What is the bottom 10th percentile of city_mpg?
+```{r}
+quantile(data$city_mpg, .10)
+```
+
+###f. What is the top 10th percentile of highway_mpg?
+```{r}
+quantile(data$highway_mpg, .9)
+```
+
+###g. What is the median price of those cars in the bottom 10th percentile of city_mpg?
+```{r}
+median(filter(data, city_mpg <= quantile(data$city_mpg, .10))$price, na.rm=TRUE)
 ```
 
