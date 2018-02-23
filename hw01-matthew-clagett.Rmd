@@ -1,0 +1,41 @@
+---
+title: "hw01-matthew-clagett.Rmd"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading necessary packages
+```{r}
+library(readr)
+```
+# downloading file into the working directory
+```{r}
+url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/autos/imports-85.data"
+download.file(url, destfile = "imports-85.data")
+```
+Loading the data into R
+
+Creating the column names
+```{r}
+names <- c("symbolizing", "normalized_losses", "make", "fuel_type", "aspiration", "num_of_doors", "body_style", "drive_wheels", "engine_location", "wheel_base", "length", "width", "height", "curb_weight", "engine_type", "num_of_cylinders", "engine_size", "fuel_system", "bore", "stroke", "compression_ratio", "horsepower", "peak_rpm", "city_mpg", "highway_mpg", "price")
+```
+Classifications of columns
+```{r}
+classes <- c("double","double","character","character","character","character","character","character","character", "double", "double", "double", "double", "integer", "character","character","integer","character", "double","double","double", "integer", "integer", "integer", "integer", "integer")
+classesreadr <- "ddcccccccddddiccicdddiiiii"
+length(classes)
+```
+Importing the data with read.csv() using created column names and classes
+```{r}
+data <- read.csv("imports-85.data", col.names=names, colClasses = classes, na.string = "?")
+str(data)
+```
+Importing the data with read_csv() using created column names and classes
+```{r}
+data2 <- read_csv("imports-85.data", col_names = names , col_types = classesreadr, na = "?")
+str(data2)
+```
+
