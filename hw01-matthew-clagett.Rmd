@@ -12,6 +12,7 @@ Loading necessary packages
 ```{r}
 library(readr)
 library(dplyr)
+library(corrplot)
 ```
 
 Downloading file into the working directory
@@ -122,6 +123,63 @@ quantile(data$highway_mpg, .9)
 
 ###g. What is the median price of those cars in the bottom 10th percentile of city_mpg?
 ```{r}
-median(filter(data, city_mpg <= quantile(data$city_mpg, .10))$price, na.rm=TRUE)
+median(filter(data, city_mpg < quantile(data$city_mpg, .10))$price, na.rm=TRUE)
+data$xys
 ```
+
+# Technical Questions about data frames
+###a. What happens when you use the dollar $ operator on a data frame, attempting to use the name of a column that does not exist? For example: dat$xyz where there is no column named xyz
+This returns a NULL value
+
+###b. Which of the following commands fails to return the vector mpg which is a column in the built-in data frame mtcars:
+4. mtcars[,mpg] will not return the vector mpg, and instead needs quotes for this structure
+
+###c. Based on your answer for part (b), what is the reason that makes such command to fail?
+Values without quotes inside brackets must be numbers, or else R thinks that they are objects of their own, which refer to certain cells, such a vector of booleans.
+
+###d. Can you include an R list as a "column" of a data frame? Yes or no, and why?
+Not that I know of, without using a special package to do so. A data frame is a list of vectors of the same length, and a list will have more elements and a different structure than the vectors, so it cannot be a part of the same data frame.
+
+###. What happens when you apply as.list() to a data frame? eg as.list(mtcars)
+The dataframe becomes a list containing separate vectors for each column. In fact, that is exactly what a data frame is, except when converted to a list, it is a lot more flexible.
+
+###. Consider the command: abc <- as.list(mtcars). What function(s) can you use to convert the object abc into a data frame?
+as.data.frame
+data.frame
+
+# Correlations of Quantitative variables
+```{r}
+nums <- sapply(data, is.numeric)
+datanum <- data[,nums]
+qdat <- cor(datanum[,-c(1:2)] %>% na.omit())
+View(qdat)
+corrplot(qdat, method="circle")
+```
+There is very little correlation between the variables stroke, compression_ratio, and height woith any of the other variables. The price of the car is highly correlated with the engine size, horsepower, and curb_weight. Both the city and highway mpg seem to have similar correlations with the other variables int he data, and are largely negatively correlated with nearly everything, as they get bigger. We can deduce that the bigger and better qualities of your car that you want, the less MPG you will get, and the higher the price.
+
+# Principal Components Analysis
+### Run PCA
+Examine the eigenvalues and determine what proportion of the variance si explained by the first three components
+```{r}
+pcqdat <- prcomp(qdat, scale. = TRUE)
+View(pcqdat$x)
+sum(pcqdat$sd[1:3])/sum(pcqdat$sd[1:14])
+```
+The first three principle components explain 77.00295% of the variation in the data.
+### PCA plot of vehicles, and PCA plot of variables
+Use the first two components to graph a scatterplot of the vehicles
+```{r}
+plot(pcqdat$x[,1:2])
+```
+
+Use the first two loadings(eigenvectors) to graph the variables
+```{r}
+plot(pcqdat$rotation[,1:2])
+```
+
+Optionally, you can call biplot() of the prcomp cobject to get a simultaneous plot of both the vehicles and the variables
+```{r}
+biplot(pcqdat, scale = 0)
+```
+This plot is measuring the first two principle components and the loading for each variable. By looking at the graph, we can see that those that are clustered together have similar effects on the variance of the data. For example, peak_rpm does not seem to be correlated with any, and likely does not explain much of the variance. Because the highway and city mpg are on the opposite side of the arrows as many of the others, this means that they are negatively correlated. The variables near each other are similar to each other.   
 
